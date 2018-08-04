@@ -97,16 +97,13 @@ class SharedPreferenceAccessor internal constructor(context: Context, name: Stri
     fun get(key: String, default: Any?): Any? {
         var actual = mPreferencesMap[key]
         if (actual == null) {
-            if (default == null || default is String) {
-                actual = mSharedPreference.getString(key, if (default != null) default as String else null)
-            } else if (default is Boolean) {
-                actual = mSharedPreference.getBoolean(key, default)
-            } else if (default is Int) {
-                actual = mSharedPreference.getInt(key, default)
-            } else if (default is Long) {
-                actual = mSharedPreference.getLong(key, default)
-            } else if (default is Float) {
-                actual = mSharedPreference.getFloat(key, default)
+            when (default) {
+                null -> actual = mSharedPreference.getString(key, null)
+                is String -> actual = mSharedPreference.getString(key, default)
+                is Boolean -> actual = mSharedPreference.getBoolean(key, default)
+                is Int -> actual = mSharedPreference.getInt(key, default)
+                is Long -> actual = mSharedPreference.getLong(key, default)
+                is Float -> actual = mSharedPreference.getFloat(key, default)
             }
             if (mSharedPreference.contains(key)) {
                 mPreferencesMap[key] = actual
@@ -121,17 +118,17 @@ class SharedPreferenceAccessor internal constructor(context: Context, name: Stri
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val editor = mSharedPreference.edit()
             when (value) {
-                is Boolean -> editor?.run { editor.putBoolean(key, value) }
-                is Int -> editor?.run { editor.putInt(key, value) }
-                is Long -> editor?.run { editor.putLong(key, value) }
-                is Float -> editor?.run { editor.putFloat(key, value) }
-                is String -> editor?.run { editor.putString(key, value) }
+                is Boolean -> editor.putBoolean(key, value)
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Float -> editor.putFloat(key, value)
+                is String -> editor.putString(key, value)
+                null -> editor.remove(key)
             }
-            editor?.apply()
+            editor.apply()
         } else {
-            mModified[key] = value
-            if (value == null) {
-                writeToDisk()
+            mModified[key] = value.also {
+                it ?: writeToDisk()
             }
             notifyListeners(key)
         }
@@ -143,14 +140,15 @@ class SharedPreferenceAccessor internal constructor(context: Context, name: Stri
         }
 
         val editor = mSharedPreference.edit()
-        for (item in mModified.keys()) {
-            val value = mModified[item]
+        for (key in mModified.keys()) {
+            val value = mModified[key]
             when (value) {
-                is Boolean -> editor?.run { editor.putBoolean(item, value) }
-                is Int -> editor?.run { editor.putInt(item, value) }
-                is Long -> editor?.run { editor.putLong(item, value) }
-                is Float -> editor?.run { editor.putFloat(item, value) }
-                is String -> editor?.run { editor.putString(item, value) }
+                is Boolean -> editor.putBoolean(key, value)
+                is Int -> editor.putInt(key, value)
+                is Long -> editor.putLong(key, value)
+                is Float -> editor.putFloat(key, value)
+                is String -> editor.putString(key, value)
+                null -> editor.remove(key)
             }
         }
         mModified.clear()
