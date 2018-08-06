@@ -1,2 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cmcm.keeper.sharedpreference" />
+    package="cmcm.keeper.sharedpreference">
+
+    <application>
+        <provider
+            android:name=".providers.SharedPreferenceProvider"
+            android:authorities="${applicationId}.keeper"
+            android:exported="false"
+            android:multiprocess="true" />
+    </application>
+
+</manifest>

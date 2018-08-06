@@ -1,6 +1,7 @@
 package com.keeper.sharedpreference
 
 import android.app.Activity
+import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
@@ -11,15 +12,16 @@ class DemoActivity : Activity(), SharedPreferences.OnSharedPreferenceChangeListe
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val accessor = SharedPreferenceKeeper.getSharedPreference(applicationContext, "demo")
+        val accessor = SharedPreferenceKeeper.getSharedPreference(applicationContext, "demo", Context.MODE_PRIVATE)
 
         accessor.registerOnSharedPreferenceChangeListener(this)
-        var test = accessor.getBoolean("a_boolean", false)
-        Log.d(javaClass.simpleName, "A boolean default: $test")
-
+        accessor.getBoolean("a_boolean", false)
         accessor.putBoolean("a_boolean", true)
-        test = accessor.getBoolean("a_boolean", false)
-        Log.d(javaClass.simpleName, "A boolean default updated: $test")
+
+        val mpAccessor = SharedPreferenceKeeper.getSharedPreference(applicationContext, "demo", Context.MODE_MULTI_PROCESS)
+        mpAccessor.registerOnSharedPreferenceChangeListener(this)
+        mpAccessor.getBoolean("a_boolean", false)
+        mpAccessor.putBoolean("a_boolean", true)
     }
 
     override fun onDestroy() {
@@ -27,6 +29,10 @@ class DemoActivity : Activity(), SharedPreferences.OnSharedPreferenceChangeListe
         val accessor = SharedPreferenceKeeper.getSharedPreference(applicationContext, "demo")
         accessor.clear()
         accessor.unregisterOnSharedPreferenceChangeListener(this)
+
+        val mpAccessor = SharedPreferenceKeeper.getSharedPreference(applicationContext, "demo", Context.MODE_MULTI_PROCESS)
+        mpAccessor.clear()
+        mpAccessor.unregisterOnSharedPreferenceChangeListener(this)
     }
 
     override fun onSharedPreferenceChanged(p0: SharedPreferences?, p1: String?) {

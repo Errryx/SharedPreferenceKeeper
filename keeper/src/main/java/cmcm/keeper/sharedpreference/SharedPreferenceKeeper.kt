@@ -9,21 +9,25 @@ import java.util.concurrent.ConcurrentHashMap
 object SharedPreferenceKeeper {
 
     private var mRegistered = false
-    private val mAccessorMap: ConcurrentHashMap<String, SharedPreferenceAccessor> = ConcurrentHashMap()
+    private val mAccessorMap: ConcurrentHashMap<String, SharedPreferenceInterface> = ConcurrentHashMap()
 
-    fun getSharedPreference(context: Context, name: String, flag: Int = Context.MODE_PRIVATE): SharedPreferenceAccessor {
+    fun getSharedPreference(context: Context, name: String, flag: Int = Context.MODE_PRIVATE): SharedPreferenceInterface {
         var accessor = mAccessorMap[name]
         if (accessor == null) {
-            accessor = SharedPreferenceAccessor(context, name, flag)
+            accessor = if (flag == Context.MODE_MULTI_PROCESS) {
+                SharedPreferenceMPAccessor(context.applicationContext, name, flag)
+            } else {
+                SharedPreferenceAccessor(context.applicationContext, name, flag)
+            }
             mAccessorMap[name] = accessor
-            registerLifeCycleCallback(context)
+            registerLifeCycleCallback(context.applicationContext)
         }
         return accessor
     }
 
     fun writeToDisk() {
         for (item in mAccessorMap.values) {
-            item.writeToDisk()
+            item.flush()
         }
     }
 
